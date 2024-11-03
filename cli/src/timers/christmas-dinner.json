@@ -1,0 +1,93 @@
+{
+    "name": "Christmas Dinner",
+    "events": [
+        {
+            "name": "preheat",
+            "description": "Preheat over to 200C.",
+            "duration": "00:10:00"
+        },
+        {
+            "name": "cook-turkey",
+            "duration": "3:00:00",
+            "dependencies": [
+                "preheat"
+            ],
+            "startDelay": "00:00:00,"
+        },
+        {
+            "name": "carve-turkey",
+            "duration": "00:10:00",
+            "dependencies": [
+                "cook-turkey"
+            ],
+            "startDelay": "2:00:00"
+        },
+        {
+            "name": "prepare-potatoes",
+            "description": "Boil the potatoes and put a tray with oil in the oven.",
+            "duration": "00:10:00",
+            "dependencies": [
+                "preheat"
+            ]
+        },
+        {
+            "name": "cook-potatoes",
+            "description": "And now we cook the potatoes.",
+            "duration": "00:50:00",
+            "dependencies": [
+                "prepare-potatoes",
+                "cook-turkey"
+            ]
+        },
+        {
+            "name": "cook-carrots",
+            "description": "Carrots into the oven.",
+            "duration": "00:40:00",
+            "dependencies": [
+                "prepare-potatoes",
+                "cook-turkey"
+            ],
+            "startDelay": "00:10:00"
+        },
+        {
+            "name": "cook-pigs",
+            "description": "Pigs in blanket into the oven.",
+            "duration": "00:30:00",
+            "dependencies": [
+                "prepare-potatoes",
+                "cook-turkey"
+            ],
+            "startDelay": "00:15:00"
+        },
+        {
+            "name": "prepare-parsnips",
+            "description": "Add all the honey you have.",
+            "duration": "00:05:00",
+            "dependencies": [
+            ],
+            "startDelay": "00:15:00"
+        },
+        {
+            "name": "cook-parsnips",
+            "description": "Pigs in blanket into the oven.",
+            "duration": "00:20:00",
+            "dependencies": [
+                "prepare-parsnips",
+                "prepare-potatoes",
+                "cook-turkey"
+            ],
+            "startDelay": "00:15:00"
+        },
+        {
+            "name": "serve",
+            "description": "Serve!",
+            "duration": "00:05:00",
+            "dependencies": [
+                "cook-potatoes",
+                "cook-pigs",
+                "cook-carrots",
+                "carve-turkey"
+            ]
+        }
+    ]
+}
