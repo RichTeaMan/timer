@@ -124,6 +124,29 @@ export class EventInstance {
         this.dependents.push(event);
     }
 
+    extendBySeconds(seconds: number) {
+        if (seconds <= 0) {
+            return;
+        }
+
+        this.durationSeconds += seconds;
+        if (this.state === EventState.COMPLETED) {
+            this.state = EventState.IN_PROGRESS;
+        }
+    }
+
+    reduceBySeconds(seconds: number) {
+        if (seconds <= 0) {
+            return;
+        }
+
+        this.durationSeconds -= seconds;
+        if (this.durationSeconds <= this.currentDurationSeconds) {
+            this.durationSeconds = this.currentDurationSeconds;
+            this.completed(this.currentDurationSeconds);
+        }
+    }
+
     /**
      * Gets the remaining seconds in this event.
      * 

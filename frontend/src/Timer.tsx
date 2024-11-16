@@ -1,13 +1,7 @@
-import * as React from "react"
 import {
-  ChakraProvider,
   Box,
   Text,
-  Link,
   VStack,
-  Code,
-  Grid,
-  theme,
   Heading,
   Card,
   CardBody,
@@ -17,9 +11,11 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-} from "@chakra-ui/react"
-import { ColorModeSwitcher } from "./ColorModeSwitcher"
-import { Logo } from "./Logo"
+  HStack,
+  Button,
+  Stack,
+  StackDivider,
+} from "@chakra-ui/react";
 import * as timerLib from "./timerLib";
 import { useEffect, useState } from "react";
 
@@ -31,7 +27,6 @@ export const Timer = () => {
   const [milliseconds, setMilliseconds] = useState(0);
   const [currentActivities, setCurrentActivities] = useState<timerLib.EventInstance[]>([]);
   const [completedActivities, setCompletedActivites] = useState<timerLib.EventInstance[]>([]);
-  const [timerDurationSeconds, setTimerDurationSeconds] = useState<number>(0);
 
   try {
     if (!timer) {
@@ -49,7 +44,6 @@ export const Timer = () => {
     }
   });
 
-
   async function timerTick() {
     if (!timer) {
       return;
@@ -66,7 +60,21 @@ export const Timer = () => {
     else {
       setCurrentActivities([]);
     }
-    setTimerDurationSeconds(timer.currentDurationSeconds);
+  }
+
+  function extendDurationInfo(seconds: number) {
+    const info = [];
+    if (seconds > 60 * 60) {
+      info.push({text: "1 hour", seconds: 60 * 60});
+    }
+    if (seconds > 30 * 60) {
+      info.push({text: "30 minutes", seconds: 30 * 60});
+    }
+    if (seconds > 10 * 60) {
+      info.push({text: "5 minutes", seconds: 5 * 60});
+    }
+    info.push({text: "1 minute", seconds: 60});
+    return info;
   }
 
   return (
@@ -80,9 +88,39 @@ export const Timer = () => {
               <Heading>{currentActivity.name}</Heading>
             </CardHeader>
             <CardBody>
-              <Text>{currentActivity.description}</Text>
-              <Text>{currentActivity.remainingToString()} remaining</Text>
-              <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
+
+              <Stack divider={<StackDivider />} spacing='4'>
+                <Box>
+                  <Text>{currentActivity.description}</Text>
+                </Box>
+                <Box>
+                  <Text>{currentActivity.remainingToString()} remaining</Text>
+                  <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
+                </Box>
+                <Box textAlign={"justify"} fontSize={"md"}>
+                  <Text>Extend time by...</Text>
+                  <HStack spacing={2}>
+                    {extendDurationInfo(currentActivity.durationSeconds).map(info => {
+                      return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.extendBySeconds(info.seconds)}>
+                        {info.text}
+                      </Button>)
+                    })}
+                  </HStack>
+                </Box>
+                <Box textAlign={"justify"} fontSize={"md"}>
+                  <Text>Reduce time by...</Text>
+                  <HStack spacing={2} paddingBottom={2}>
+                    {extendDurationInfo(currentActivity.durationSeconds).map(info => {
+                      return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.reduceBySeconds(info.seconds)}>
+                        {info.text}
+                      </Button>)
+                    })}
+                  </HStack>
+                  <Button key="skip" size={"sm"} w={"8em"} onClick={() => currentActivity.completed(currentActivity.currentDurationSeconds)}>
+                    End now
+                  </Button>
+                </Box>
+              </Stack>
             </CardBody>
           </Card>)
         })}
