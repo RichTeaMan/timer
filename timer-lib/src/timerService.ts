@@ -1,9 +1,9 @@
-interface TimerJson {
+export interface TimerJson {
     name: string,
     events: EventJson[]
 }
 
-interface EventJson {
+export interface EventJson {
     name: string,
     description: string,
     duration: string,
@@ -11,14 +11,14 @@ interface EventJson {
     startDelay: string
 }
 
-enum EventState {
+export enum EventState {
     PENDING,
     IN_PROGRESS,
     COMPLETED
 }
 
 
-class TimerInstance {
+export class TimerInstance {
     name: string;
     events: EventInstance[];
     currentDurationSeconds: number = 0;
@@ -86,7 +86,7 @@ class TimerInstance {
     }
 }
 
-class EventInstance {
+export class EventInstance {
     name: string;
     description: string;
     state: EventState = EventState.PENDING;
@@ -179,6 +179,11 @@ function parseDuration(duration?: string): number {
     return seconds;
 }
 
+export function ConstructEventFromName(name: string): TimerInstance {
+    const json = require(`/home/tom/projects/timer/cli/src/timers/${name}.json`);
+    return ConstructEvent(json);
+}
+
 export function ConstructEvent(timerJson: TimerJson): TimerInstance {
 
     const eventInstances: Map<string, EventInstance> = new Map();
@@ -210,7 +215,7 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
 
     // construct tree
     console.log(eventInstances.values());
-    const rootEvents = eventInstances.values().filter(ev => ev.dependencies.length === 0).toArray();
+    const rootEvents = toArray(eventInstances.values()).filter(ev => ev.dependencies.length === 0);
 
     if (rootEvents.length === 0) {
         throw new Error("No events with no dependencies");
@@ -231,55 +236,19 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
             throw new Error(`${event.name} has a cyclic dependency`);
         }
     }
-    return new TimerInstance(timerJson.name, eventInstances.values().toArray());
+    return new TimerInstance(timerJson.name, toArray(eventInstances.values()));
 };
 
-async function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function main() {
-    const json = require("/home/tom/projects/timer/cli/src/timers/christmas-dinner.json");
-    const timer = ConstructEvent(json);
-    console.log(`Timer: ${timer.name}`);
-    for (const event of timer.events) {
-        console.log(event.toString());
+function toArray<T>(values: MapIterator<T>){
+    // javascript is a joke of a language
+    if (typeof values.toArray === "function") {
+        return values.toArray();
     }
-
-    console.log("Running task...");
-
-    while (timer.state !== EventState.COMPLETED) {
-
-        //await delay(1000);
-        await delay(10);
-        console.clear();
-        timer.progress();
-        const completed = timer.events.filter(ev => ev.state === EventState.COMPLETED);
-        const inProgress = timer.events.filter(ev => ev.state === EventState.IN_PROGRESS);
-        //console.log("--------");
-        console.log(`${timer.name} - ${timer.currentDurationSeconds} seconds`);
-        console.log("Completed:");
-        if (completed.length === 0) {
-            console.log("    None");
-        }
-        else {
-            for (const ev of completed) {
-                console.log(`    ${ev.name}`);
-            }
-        }
-
-        console.log();
-        console.log(`In progress (${inProgress.length}):`)
-        console.log();
-        for (const ev of inProgress) {
-            console.log(ev.toString());
-            console.log("###");
-            console.log();
-        }
-
-
+    const arr = [];
+    let result = values.next();
+    while (!result.done) {
+        arr.push(result.value);
+        result = values.next();
     }
-    console.log(`${timer.name} completed in ${timer.currentDurationSeconds} seconds.`)
+    return arr;
 }
-
-main().catch(e => { console.error(e) });
