@@ -62,6 +62,15 @@ export const Timer = () => {
     }
   }
 
+  function formatTitle(title: string): string {
+    if (!title) {
+      return "";
+    }
+
+    const cleaned = title.replaceAll("-", " ").replaceAll("_", " ");
+    return `${cleaned[0].toUpperCase()}${cleaned.substring(1)}`;
+  }
+
   function extendDurationInfo(seconds: number) {
     const info = [];
     if (seconds > 60 * 60) {
@@ -85,7 +94,7 @@ export const Timer = () => {
         {currentActivities.map(currentActivity => {
           return (<Card key={currentActivity.name} w={"lg"}>
             <CardHeader>
-              <Heading>{currentActivity.name}</Heading>
+              <Heading>{formatTitle(currentActivity.name)}</Heading>
             </CardHeader>
             <CardBody>
 
@@ -135,7 +144,7 @@ export const Timer = () => {
                 return (<AccordionItem key={completedActivity.name} textAlign={"left"}>
                   <AccordionButton>
                     <Box as='span' flex='1' textAlign='left'>
-                      <Heading size={"sm"}>{completedActivity.name}</Heading>
+                      <Heading size={"sm"}>{formatTitle(completedActivity.name)}</Heading>
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
