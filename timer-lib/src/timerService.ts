@@ -84,6 +84,15 @@ export class TimerInstance {
             }
         }
     }
+
+
+
+    currentDurationToString(): string {
+        if (!this.currentDurationSeconds) {
+            return '';
+        }
+        return formatSeconds(this.currentDurationSeconds);
+    }
 }
 
 export class EventInstance {
@@ -115,6 +124,40 @@ export class EventInstance {
         this.dependents.push(event);
     }
 
+    /**
+     * Gets the remaining seconds in this event.
+     * 
+     * This function is not aware of upstream tasks and should not be used to
+     * calculate the time taken to get to this task.
+     */
+    remainingSeconds(): number {
+        return this.durationSeconds - this.currentDurationSeconds;
+    }
+
+    remainingToString(): string {
+        if (this.state === EventState.COMPLETED) {
+            return "Completed";
+
+        }
+        if (this.state === EventState.PENDING) {
+            return "Not yet started";
+        }
+
+        const seconds = this.remainingSeconds();
+        return formatSeconds(seconds);
+    }
+
+    durationToString(): string {
+        return formatSeconds(this.durationSeconds);
+    }
+
+    completedToString(): string {
+        if (!this.completedDurationSeconds) {
+            return '';
+        }
+        return formatSeconds(this.completedDurationSeconds);
+    }
+
     completed(timerDurationSeconds: number) {
         this.state = EventState.COMPLETED;
         this.completedDurationSeconds = timerDurationSeconds;
@@ -134,6 +177,25 @@ export class EventInstance {
 `;
         return res;
     }
+}
+
+function formatSeconds(seconds: number): string {
+    if (seconds > 60 * 60) {
+        const hours = Math.floor(seconds / ( 60 * 60));
+        const minutes = Math.floor((seconds % (60 * 60)) / 60);
+        const hourPlural = hours !== 1 ? 's' : '';
+        const minutesPlural = minutes !== 1 ? 's' : '';
+        return `${hours} hour${hourPlural}${minutes !== 0 ? `, ${minutes} minute${minutesPlural}` : `` }`;
+    }
+    if (seconds > 60) {
+        const minutes = Math.floor(seconds / 60);
+        const secondsPart = Math.floor(seconds % 60);
+        const minutesPlural = minutes !== 1 ? 's' : '';
+        const secondPlural = secondsPart !== 1 ? 's' : '';
+        return `${minutes} minute${minutesPlural}${secondsPart !== 0 ? `, ${secondsPart} second${secondPlural}` : `` }`;
+    }
+    const secondPlural = seconds === 1 ? 's' : '';
+    return `${seconds} second${secondPlural}`;        
 }
 
 function parseDuration(duration?: string): number {
@@ -214,7 +276,6 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
     }
 
     // construct tree
-    console.log(eventInstances.values());
     const rootEvents = toArray(eventInstances.values()).filter(ev => ev.dependencies.length === 0);
 
     if (rootEvents.length === 0) {

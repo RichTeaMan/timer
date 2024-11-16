@@ -9,6 +9,14 @@ import {
   Grid,
   theme,
   Heading,
+  Card,
+  CardBody,
+  CardHeader,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from "@chakra-ui/react"
 import { ColorModeSwitcher } from "./ColorModeSwitcher"
 import { Logo } from "./Logo"
@@ -18,7 +26,7 @@ import { useEffect, useState } from "react";
 export const Timer = () => {
 
   const INTERVAL_LENGTH = 10;
-  
+
   const [timer, setTimer] = useState<timerLib.TimerInstance>();
   const [milliseconds, setMilliseconds] = useState(0);
   const [currentActivities, setCurrentActivities] = useState<timerLib.EventInstance[]>([]);
@@ -31,7 +39,7 @@ export const Timer = () => {
       setTimer(timerLib.ConstructEvent(json));
     }
   }
-  catch(e) {
+  catch (e) {
     console.error(e);
   }
   useEffect(() => {
@@ -62,23 +70,46 @@ export const Timer = () => {
   }
 
   return (
-    <Box textAlign="center" fontSize="xl">
+    <Box textAlign="center">
       <VStack spacing={8}>
-        <Heading>Dinner Timer!</Heading>
-        <Text>{timerDurationSeconds} seconds</Text>
+        <Heading>{timer?.name}</Heading>
+        {timer?.state === timerLib.EventState.COMPLETED ? <Text>Completed in {timer.currentDurationToString()}</Text> : <></>}
         {currentActivities.map(currentActivity => {
-          return(<Box>
-            <Heading>{currentActivity.name}</Heading>
-            <Text>{currentActivity.currentDurationSeconds} seconds</Text>
-            <Text>{currentActivity.description}</Text>
-          </Box>)
+          return (<Card key={currentActivity.name} w={"lg"}>
+            <CardHeader>
+              <Heading>{currentActivity.name}</Heading>
+            </CardHeader>
+            <CardBody>
+              <Text>{currentActivity.description}</Text>
+              <Text>{currentActivity.remainingToString()} remaining</Text>
+              <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
+            </CardBody>
+          </Card>)
         })}
-        <Heading size={"md"}>Completed</Heading>
-        {completedActivities.map(completedActivity => {
-          return(<Box>
-            <Heading size={"sm"}>{completedActivity.name}</Heading>
-          </Box>)
-        })}
+
+        <Card w={"lg"}>
+          <CardHeader>
+            <Heading size={"md"}>Completed Tasks</Heading>
+          </CardHeader>
+          <CardBody>
+            <Accordion w={"100%"} bgColor={"white"} allowMultiple={true}>
+              {completedActivities.map(completedActivity => {
+                return (<AccordionItem key={completedActivity.name} textAlign={"left"}>
+                  <AccordionButton>
+                    <Box as='span' flex='1' textAlign='left'>
+                      <Heading size={"sm"}>{completedActivity.name}</Heading>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                  <AccordionPanel>
+                    <Text color={"gray"}>Completed in {completedActivity.completedToString()}</Text>
+                    <Text>{completedActivity.description}</Text>
+                  </AccordionPanel>
+                </AccordionItem>)
+              })}
+            </Accordion>
+          </CardBody>
+        </Card>
       </VStack>
     </Box>
   );
