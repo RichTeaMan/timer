@@ -18,10 +18,17 @@ import {
 } from "@chakra-ui/react";
 import * as timerLib from "./timerLib";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+type RouteParams = {
+  timerKey: string;
+}
 
 export const Timer = () => {
 
   const INTERVAL_LENGTH = 10;
+
+  const params = useParams<RouteParams>();
 
   const [timer, setTimer] = useState<timerLib.TimerInstance>();
   const [milliseconds, setMilliseconds] = useState(0);
@@ -31,8 +38,13 @@ export const Timer = () => {
 
   try {
     if (!timer) {
-      const json = timerLib.FetchChristmasDinner();
-      setTimer(timerLib.ConstructEvent(json));
+      if (params.timerKey) {
+        const json = timerLib.FetchTimer(params.timerKey);
+        setTimer(timerLib.ConstructEvent(json));
+      }
+      else {
+        throw new Error("Timer not found");
+      }
     }
   }
   catch (e) {
