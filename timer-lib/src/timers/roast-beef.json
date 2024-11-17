@@ -8,9 +8,19 @@
         },
         {
             "name": "cook-beef",
-            "duration": "1:45:00",
+            "description": "A top rump joint takes 20 minutes per 500g at 220°C. It should rest for 35 minutes with foil.",
+            "duration": "0:40:00",
             "dependencies": [
                 "preheat"
+            ],
+            "startDelay": "00:00:00,"
+        },
+        {
+            "name": "rest-beef",
+            "description": "Don't forget the foil!",
+            "duration": "0:35:00",
+            "dependencies": [
+                "cook-beef"
             ],
             "startDelay": "00:00:00,"
         },
@@ -18,15 +28,23 @@
             "name": "carve-beef",
             "duration": "00:10:00",
             "dependencies": [
-                "cook-beef"
+                "rest-beef"
             ],
-            "startDelay": "00:40:00"
+            "startDelay": "00:00:00"
         },
         {
-            "name": "prepare-potatoes",
-            "description": "Boil the potatoes and put a tray with oil in the oven.",
+            "name": "peel-potatoes",
+            "description": "Peel the potatoes cut them into nommable chunks.",
             "duration": "00:10:00",
             "dependencies": [
+            ]
+        },
+        {
+            "name": "boil-potatoes",
+            "description": "Boil the potatoes and dry them out. Don't forget to abuse them so they crunch up. Also put a tray with oil in the oven so it's hot.",
+            "duration": "00:10:00",
+            "dependencies": [
+                "peel-potatoes",
                 "preheat"
             ]
         },
@@ -35,7 +53,7 @@
             "description": "And now we cook the potatoes.",
             "duration": "00:50:00",
             "dependencies": [
-                "prepare-potatoes",
+                "boil-potatoes",
                 "cook-beef"
             ]
         },
@@ -44,7 +62,7 @@
             "description": "Carrots into the oven.",
             "duration": "00:40:00",
             "dependencies": [
-                "prepare-potatoes",
+                "boil-potatoes",
                 "cook-beef"
             ],
             "startDelay": "00:10:00"
@@ -61,7 +79,7 @@
             "description": "Put puddings into the oven.",
             "duration": "00:20:00",
             "dependencies": [
-                "prepare-potatoes",
+                "boil-potatoes",
                 "mix-yorkshire-batter"
             ],
             "startDelay": "00:30:00"
