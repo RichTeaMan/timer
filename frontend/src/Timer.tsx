@@ -27,6 +27,7 @@ export const Timer = () => {
   const [milliseconds, setMilliseconds] = useState(0);
   const [currentActivities, setCurrentActivities] = useState<timerLib.EventInstance[]>([]);
   const [completedActivities, setCompletedActivites] = useState<timerLib.EventInstance[]>([]);
+  const [upcomingActivities, setUpcomingActivites] = useState<timerLib.EventInstance[]>([]);
 
   try {
     if (!timer) {
@@ -56,6 +57,9 @@ export const Timer = () => {
       const inProgress = timer.events.filter(ev => ev.state === timerLib.EventState.IN_PROGRESS);
       setCompletedActivites(completed);
       setCurrentActivities(inProgress);
+
+      const upcoming = [... new Set(inProgress.flatMap(a => a.dependents))];
+      setUpcomingActivites(upcoming);
     }
     else {
       setCurrentActivities([]);
@@ -74,15 +78,15 @@ export const Timer = () => {
   function extendDurationInfo(seconds: number) {
     const info = [];
     if (seconds > 60 * 60) {
-      info.push({text: "1 hour", seconds: 60 * 60});
+      info.push({ text: "1 hour", seconds: 60 * 60 });
     }
     if (seconds > 30 * 60) {
-      info.push({text: "30 minutes", seconds: 30 * 60});
+      info.push({ text: "30 minutes", seconds: 30 * 60 });
     }
     if (seconds > 10 * 60) {
-      info.push({text: "5 minutes", seconds: 5 * 60});
+      info.push({ text: "5 minutes", seconds: 5 * 60 });
     }
-    info.push({text: "1 minute", seconds: 60});
+    info.push({ text: "1 minute", seconds: 60 });
     return info;
   }
 
@@ -133,6 +137,30 @@ export const Timer = () => {
             </CardBody>
           </Card>)
         })}
+
+        <Card w={"lg"}>
+          <CardHeader>
+            <Heading size={"md"}>Upcoming Tasks</Heading>
+          </CardHeader>
+          <CardBody>
+            <Accordion w={"100%"} bgColor={"white"} allowMultiple={true}>
+              {upcomingActivities.map(activity => {
+                return (<AccordionItem key={activity.name} textAlign={"left"}>
+                  <AccordionButton>
+                    <Box as='span' flex='1' textAlign='left'>
+                      <Heading size={"sm"}>{formatTitle(activity.name)}</Heading>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                  <AccordionPanel>
+                    <Text color={"gray"}>Expected duration is {activity.durationToString()}</Text>
+                    <Text>{activity.description}</Text>
+                  </AccordionPanel>
+                </AccordionItem>)
+              })}
+            </Accordion>
+          </CardBody>
+        </Card>
 
         <Card w={"lg"}>
           <CardHeader>
