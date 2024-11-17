@@ -19,7 +19,6 @@ const router = createBrowserRouter([
   }
 ]);
 
-
 export const App = () => (
   <ChakraProvider theme={theme}>
     <Box textAlign="center" fontSize="xl" bgColor={"blue.100"}>

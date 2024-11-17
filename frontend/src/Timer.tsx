@@ -108,54 +108,65 @@ export const Timer = () => {
         <Heading>{timer?.name}</Heading>
         <Text color={"gray"}>Expected duration is {timer?.expectedDurationToString()}</Text>
         {timer?.state === timerLib.EventState.COMPLETED ? <Text>Completed in {timer.currentDurationToString()}</Text> : <></>}
-        {currentActivities.map(currentActivity => {
-          return (<Card key={currentActivity.name} w={"lg"}>
-            <CardHeader>
-              <Heading>{formatTitle(currentActivity.name)}</Heading>
-            </CardHeader>
-            <CardBody>
-
-              <Stack divider={<StackDivider />} spacing='4'>
-                <Box>
-                  <Text>{currentActivity.description}</Text>
-                </Box>
-                <Box>
-                  <Text>{currentActivity.remainingToString()} remaining{currentActivity.state === timerLib.EventState.PAUSED ? ' - This task is paused' : ''}</Text>
-                  <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
-
-                  <Box textAlign={"justify"} fontSize={"md"}>
-                    <Button size={"sm"} w={"8em"} onClick={() => currentActivity.togglePause()}>
-                      {currentActivity.state === timerLib.EventState.PAUSED ? 'Resume' : 'Pause'}
-                    </Button>
-                  </Box>
-                </Box>
-                <Box textAlign={"justify"} fontSize={"md"}>
-                  <Text>Extend time by...</Text>
-                  <HStack spacing={2}>
-                    {extendDurationInfo(currentActivity.durationSeconds).map(info => {
-                      return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.extendBySeconds(info.seconds)}>
-                        {info.text}
-                      </Button>)
-                    })}
-                  </HStack>
-                </Box>
-                <Box textAlign={"justify"} fontSize={"md"}>
-                  <Text>Reduce time by...</Text>
-                  <HStack spacing={2} paddingBottom={2}>
-                    {extendDurationInfo(currentActivity.durationSeconds).map(info => {
-                      return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.reduceBySeconds(info.seconds)}>
-                        {info.text}
-                      </Button>)
-                    })}
-                  </HStack>
-                  <Button key="skip" size={"sm"} w={"8em"} onClick={() => currentActivity.completed(currentActivity.currentDurationSeconds)}>
-                    End now
-                  </Button>
-                </Box>
-              </Stack>
-            </CardBody>
-          </Card>)
-        })}
+        <Card w={"lg"}>
+          <CardHeader>
+            <Heading>
+              Active Tasks
+            </Heading>
+          </CardHeader>
+          <CardBody>
+            <Accordion w={"100%"} bgColor={"white"} allowMultiple={true}>
+              {currentActivities.map(currentActivity => {
+                return (<AccordionItem key={currentActivity.name} textAlign={"left"}>
+                  <AccordionButton>
+                    <Box as='span' flex='1' textAlign='left'>
+                      <Heading size={"md"}>{formatTitle(currentActivity.name)}</Heading>
+                      <Text>{currentActivity.remainingToString()} remaining{currentActivity.state === timerLib.EventState.PAUSED ? ' - This task is paused' : ''}</Text>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                  <AccordionPanel>
+                    <Stack divider={<StackDivider />} spacing='4'>
+                      <Box textAlign={"justify"} fontSize={"md"}>
+                        <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
+                        <Button size={"sm"} w={"8em"} onClick={() => currentActivity.togglePause()}>
+                          {currentActivity.state === timerLib.EventState.PAUSED ? 'Resume' : 'Pause'}
+                        </Button>
+                      </Box>
+                      <Box>
+                        <Text whiteSpace={"pre-line"}>{currentActivity.description}</Text>
+                      </Box>
+                      <Box textAlign={"justify"} fontSize={"md"}>
+                        <Text>Extend time by...</Text>
+                        <HStack spacing={2}>
+                          {extendDurationInfo(currentActivity.durationSeconds).map(info => {
+                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.extendBySeconds(info.seconds)}>
+                              {info.text}
+                            </Button>)
+                          })}
+                        </HStack>
+                      </Box>
+                      <Box textAlign={"justify"} fontSize={"md"}>
+                        <Text>Reduce time by...</Text>
+                        <HStack spacing={2} paddingBottom={2}>
+                          {extendDurationInfo(currentActivity.durationSeconds).map(info => {
+                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.reduceBySeconds(info.seconds)}>
+                              {info.text}
+                            </Button>)
+                          })}
+                        </HStack>
+                        <Button key="skip" size={"sm"} w={"8em"} onClick={() => currentActivity.completed(currentActivity.currentDurationSeconds)}>
+                          End now
+                        </Button>
+                      </Box>
+                    </Stack>
+                  </AccordionPanel>
+                </AccordionItem>
+                )
+              })}
+            </Accordion>
+          </CardBody>
+        </Card>
 
         <Card w={"lg"}>
           <CardHeader>
