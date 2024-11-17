@@ -3,7 +3,7 @@
     "events": [
         {
             "name": "preheat",
-            "description": "Preheat over to 200C.",
+            "description": "Preheat oven to 220°C.",
             "duration": "00:10:00"
         },
         {
@@ -69,7 +69,7 @@
         },
         {
             "name": "mix-yorkshire-batter",
-            "description": "Mix the Yorkshire pudding batter.",
+            "description": "Mix the Yorkshire pudding batter. You will need: \n- 115g plain white flour\n - Egg and additional egg white\n - 190ml milk\n - Pinch salt",
             "duration": "00:05:00",
             "dependencies": [
             ]
