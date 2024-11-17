@@ -1,9 +1,11 @@
 export * from "../../timer-lib/src/timerService";
 import christmasDinnerJson from "../../timer-lib/src/timers/christmas-dinner.json";
+import roastBeefJson from "../../timer-lib/src/timers/roast-beef.json";
 import { TimerJson } from "../../timer-lib/src/timerService";
 
 const TIMER_MAP: { [key:string]:TimerJson; } = {
-    "christmas-dinner": christmasDinnerJson as TimerJson
+    "christmas-dinner": christmasDinnerJson as TimerJson,
+    "roast-beef": roastBeefJson as TimerJson
 }
 
 export function FetchChristmasDinner() {

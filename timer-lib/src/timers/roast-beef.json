@@ -1,5 +1,5 @@
 {
-    "name": "Christmas Dinner",
+    "name": "Roast Beef",
     "events": [
         {
             "name": "preheat",
@@ -7,22 +7,20 @@
             "duration": "00:10:00"
         },
         {
-            "name": "cook-turkey",
-            "description": "And don't forget to baste.",
-            "duration": "3:00:00",
+            "name": "cook-beef",
+            "duration": "1:45:00",
             "dependencies": [
                 "preheat"
             ],
             "startDelay": "00:00:00,"
         },
         {
-            "name": "carve-turkey",
-            "description": "Slice that beast up. Don't forget the back meat.",
+            "name": "carve-beef",
             "duration": "00:10:00",
             "dependencies": [
-                "cook-turkey"
+                "cook-beef"
             ],
-            "startDelay": "2:00:00"
+            "startDelay": "00:40:00"
         },
         {
             "name": "prepare-potatoes",
@@ -38,7 +36,7 @@
             "duration": "00:50:00",
             "dependencies": [
                 "prepare-potatoes",
-                "cook-turkey"
+                "cook-beef"
             ]
         },
         {
@@ -47,38 +45,26 @@
             "duration": "00:40:00",
             "dependencies": [
                 "prepare-potatoes",
-                "cook-turkey"
+                "cook-beef"
             ],
             "startDelay": "00:10:00"
         },
         {
-            "name": "cook-pigs",
-            "description": "Pigs in blanket into the oven.",
-            "duration": "00:30:00",
-            "dependencies": [
-                "prepare-potatoes",
-                "cook-turkey"
-            ],
-            "startDelay": "00:15:00"
-        },
-        {
-            "name": "prepare-parsnips",
-            "description": "Add all the honey you have.",
+            "name": "mix-yorkshire-batter",
+            "description": "Mix the Yorkshire pudding batter.",
             "duration": "00:05:00",
             "dependencies": [
-            ],
-            "startDelay": "00:15:00"
+            ]
         },
         {
-            "name": "cook-parsnips",
-            "description": "Pigs in blanket into the oven.",
+            "name": "cook-yorkshire-puddings",
+            "description": "Put puddings into the oven.",
             "duration": "00:20:00",
             "dependencies": [
-                "prepare-parsnips",
                 "prepare-potatoes",
-                "cook-turkey"
+                "mix-yorkshire-batter"
             ],
-            "startDelay": "00:15:00"
+            "startDelay": "00:30:00"
         },
         {
             "name": "serve",
@@ -86,9 +72,9 @@
             "duration": "00:05:00",
             "dependencies": [
                 "cook-potatoes",
-                "cook-pigs",
+                "cook-yorkshire-puddings",
                 "cook-carrots",
-                "carve-turkey"
+                "carve-beef"
             ]
         }
     ]
