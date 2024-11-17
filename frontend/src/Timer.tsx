@@ -66,7 +66,7 @@ export const Timer = () => {
 
       timer.progress();
       const completed = timer.events.filter(ev => ev.state === timerLib.EventState.COMPLETED);
-      const inProgress = timer.events.filter(ev => ev.state === timerLib.EventState.IN_PROGRESS);
+      const inProgress = timer.events.filter(ev => ev.state === timerLib.EventState.IN_PROGRESS || ev.state === timerLib.EventState.PAUSED);
       setCompletedActivites(completed);
       setCurrentActivities(inProgress);
 
@@ -106,6 +106,7 @@ export const Timer = () => {
     <Box textAlign="center">
       <VStack spacing={8}>
         <Heading>{timer?.name}</Heading>
+        <Text color={"gray"}>Expected duration is {timer?.expectedDurationToString()}</Text>
         {timer?.state === timerLib.EventState.COMPLETED ? <Text>Completed in {timer.currentDurationToString()}</Text> : <></>}
         {currentActivities.map(currentActivity => {
           return (<Card key={currentActivity.name} w={"lg"}>
@@ -119,8 +120,14 @@ export const Timer = () => {
                   <Text>{currentActivity.description}</Text>
                 </Box>
                 <Box>
-                  <Text>{currentActivity.remainingToString()} remaining</Text>
+                  <Text>{currentActivity.remainingToString()} remaining{currentActivity.state === timerLib.EventState.PAUSED ? ' - This task is paused' : ''}</Text>
                   <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
+
+                  <Box textAlign={"justify"} fontSize={"md"}>
+                    <Button size={"sm"} w={"8em"} onClick={() => currentActivity.togglePause()}>
+                      {currentActivity.state === timerLib.EventState.PAUSED ? 'Resume' : 'Pause'}
+                    </Button>
+                  </Box>
                 </Box>
                 <Box textAlign={"justify"} fontSize={"md"}>
                   <Text>Extend time by...</Text>

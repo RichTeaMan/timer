@@ -14,7 +14,8 @@ export interface EventJson {
 export enum EventState {
     PENDING,
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED,
+    PAUSED
 }
 
 
@@ -22,6 +23,7 @@ export class TimerInstance {
     name: string;
     events: EventInstance[];
     currentDurationSeconds: number = 0;
+    expectedDurationSeconds: number = 0;
     state: EventState = EventState.PENDING;
 
     constructor(name: string, events: EventInstance[]) {
@@ -85,13 +87,26 @@ export class TimerInstance {
         }
     }
 
-
+    reset() {
+        this.state = EventState.PENDING;
+        this.currentDurationSeconds = 0;
+        for (const e of this.events) {
+            e.reset();
+        }
+    }
 
     currentDurationToString(): string {
         if (!this.currentDurationSeconds) {
             return '';
         }
         return formatSeconds(this.currentDurationSeconds);
+    }
+
+    expectedDurationToString(): string {
+        if (!this.expectedDurationSeconds) {
+            return '';
+        }
+        return formatSeconds(this.expectedDurationSeconds);
     }
 }
 
@@ -181,6 +196,24 @@ export class EventInstance {
         return formatSeconds(this.completedDurationSeconds);
     }
 
+    /**
+     * Pauses or resumes task. Does nothing if the task is pending or completed.
+     */
+    togglePause() {
+        if (this.state === EventState.PAUSED) {
+            this.state = EventState.IN_PROGRESS;
+        }
+        else if (this.state === EventState.IN_PROGRESS) {
+            this.state = EventState.PAUSED;
+        }
+    }
+
+    reset() {
+        this.state = EventState.PENDING;
+        this.completedDurationSeconds = undefined;
+        this.currentDurationSeconds = 0;
+    }
+
     completed(timerDurationSeconds: number) {
         this.state = EventState.COMPLETED;
         this.completedDurationSeconds = timerDurationSeconds;
@@ -204,21 +237,21 @@ export class EventInstance {
 
 function formatSeconds(seconds: number): string {
     if (seconds > 60 * 60) {
-        const hours = Math.floor(seconds / ( 60 * 60));
+        const hours = Math.floor(seconds / (60 * 60));
         const minutes = Math.floor((seconds % (60 * 60)) / 60);
         const hourPlural = hours !== 1 ? 's' : '';
         const minutesPlural = minutes !== 1 ? 's' : '';
-        return `${hours} hour${hourPlural}${minutes !== 0 ? `, ${minutes} minute${minutesPlural}` : `` }`;
+        return `${hours} hour${hourPlural}${minutes !== 0 ? `, ${minutes} minute${minutesPlural}` : ``}`;
     }
     if (seconds > 60) {
         const minutes = Math.floor(seconds / 60);
         const secondsPart = Math.floor(seconds % 60);
         const minutesPlural = minutes !== 1 ? 's' : '';
         const secondPlural = secondsPart !== 1 ? 's' : '';
-        return `${minutes} minute${minutesPlural}${secondsPart !== 0 ? `, ${secondsPart} second${secondPlural}` : `` }`;
+        return `${minutes} minute${minutesPlural}${secondsPart !== 0 ? `, ${secondsPart} second${secondPlural}` : ``}`;
     }
     const secondPlural = seconds === 1 ? 's' : '';
-    return `${seconds} second${secondPlural}`;        
+    return `${seconds} second${secondPlural}`;
 }
 
 function parseDuration(duration?: string): number {
@@ -320,10 +353,20 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
             throw new Error(`${event.name} has a cyclic dependency`);
         }
     }
-    return new TimerInstance(timerJson.name, toArray(eventInstances.values()));
+    let instance = new TimerInstance(timerJson.name, toArray(eventInstances.values()));
+    let duration = 0;
+    // extremely expensive way to determine how long the entire task will take
+    while(instance.state !== EventState.COMPLETED) {
+        instance.progress();
+        duration++;
+    }
+
+    instance.expectedDurationSeconds = duration;
+    instance.reset();
+    return instance;
 };
 
-function toArray<T>(values: MapIterator<T>){
+function toArray<T>(values: MapIterator<T>) {
     // javascript is a joke of a language
     if (typeof values.toArray === "function") {
         return values.toArray();
