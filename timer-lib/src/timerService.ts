@@ -13,9 +13,10 @@ export interface EventJson {
 
 export enum EventState {
     PENDING,
+    WAITING,
     IN_PROGRESS,
     COMPLETED,
-    PAUSED
+    PAUSED,
 }
 
 
@@ -55,32 +56,55 @@ export class TimerInstance {
         if (this.state === EventState.IN_PROGRESS) {
             this.currentDurationSeconds++;
             let checkCompleted = false;
-            const inProgressEvents = this.events.filter(ev => ev.state === EventState.IN_PROGRESS);
 
-            for (const event of inProgressEvents) {
-                event.currentDurationSeconds++;
-                if (event.currentDurationSeconds >= event.durationSeconds) {
-                    checkCompleted = true;
-                    event.completed(this.currentDurationSeconds);
-                }
-            }
-            for (const ev of this.events.filter(ev => ev.state === EventState.PENDING)) {
-                if (ev.dependencies.filter(d => d.state === EventState.COMPLETED).length === ev.dependencies.length) {
-                    if (ev.startDelaySeconds <= 0) {
-                        ev.state = EventState.IN_PROGRESS;
-                    }
-                    else {
-                        // postive delay, find longest running dep and add wait time
-                        const taskFinishedTime = ev.dependencies.map(d => d.completedDurationSeconds!).sort((a, b) => b - a)[0];
-                        if (this.currentDurationSeconds >= taskFinishedTime + ev.startDelaySeconds) {
-                            ev.state = EventState.IN_PROGRESS;
+            for (const event of this.events) {
+                switch(event.state) {
+                    case EventState.IN_PROGRESS:
+                        event.currentDurationSeconds++;
+                        if (event.currentDurationSeconds >= event.durationSeconds) {
+                            checkCompleted = true;
+                            event.completed(this.currentDurationSeconds);
+                            continue;
                         }
-                    }
+                        break;
+                    case EventState.PENDING:
+                        // check if dependencies are complete
+                        let completed = true;
+                        for (const d of event.dependencies) {
+                            if (d.state !== EventState.COMPLETED) {
+                                completed = false;
+                                break;
+                            }
+                        }
+                        if (completed) {
+                            if (event.startDelaySeconds <= 0) {
+                                event.state = EventState.IN_PROGRESS;
+                            }
+                            else {
+                                event.state = EventState.WAITING;
+                            }
+                        }
+                        break;
+                    case EventState.WAITING:
+                        event.elaspedStartDelaySeconds++;
+                        if (event.elaspedStartDelaySeconds >= event.startDelaySeconds) {
+                            event.state = EventState.IN_PROGRESS;
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
+
             if (checkCompleted) {
-                const completed = this.events.filter(ev => ev.state === EventState.COMPLETED);
-                if (completed.length === this.events.length) {
+                let completed = true;
+                for (const d of this.events) {
+                    if (d.state !== EventState.COMPLETED) {
+                        completed = false;
+                        break;
+                    }
+                }
+                if (completed) {
                     this.state = EventState.COMPLETED;
                 }
             }
@@ -120,6 +144,7 @@ export class EventInstance {
     dependencies: EventInstance[] = [];
     dependents: EventInstance[] = [];
     startDelaySeconds: number;
+    elaspedStartDelaySeconds: number = 0;
 
     constructor(eventJson: EventJson) {
         this.name = eventJson.name;
@@ -212,6 +237,7 @@ export class EventInstance {
         this.state = EventState.PENDING;
         this.completedDurationSeconds = undefined;
         this.currentDurationSeconds = 0;
+        this.elaspedStartDelaySeconds = 0;
     }
 
     completed(timerDurationSeconds: number) {
@@ -356,7 +382,7 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
     let instance = new TimerInstance(timerJson.name, toArray(eventInstances.values()));
     let duration = 0;
     // extremely expensive way to determine how long the entire task will take
-    while(instance.state !== EventState.COMPLETED) {
+    while (instance.state !== EventState.COMPLETED) {
         instance.progress();
         duration++;
     }
