@@ -21,15 +21,17 @@ export enum EventState {
 
 
 export class TimerInstance {
-    name: string;
-    events: EventInstance[];
+    name: string = "";
+    events: EventInstance[] = [];
     currentDurationSeconds: number = 0;
     expectedDurationSeconds: number = 0;
     state: EventState = EventState.PENDING;
 
-    constructor(name: string, events: EventInstance[]) {
-        this.name = name;
-        this.events = events;
+    static fromEvents(name: string, events: EventInstance[]): TimerInstance {
+        const timer = new TimerInstance();
+        timer.name = name;
+        timer.events = events;
+        return timer;
     }
 
     /** Works best for low values of delta. */
@@ -58,7 +60,7 @@ export class TimerInstance {
             let checkCompleted = false;
 
             for (const event of this.events) {
-                switch(event.state) {
+                switch (event.state) {
                     case EventState.IN_PROGRESS:
                         event.currentDurationSeconds++;
                         if (event.currentDurationSeconds >= event.durationSeconds) {
@@ -78,7 +80,7 @@ export class TimerInstance {
                         }
                         if (completed) {
                             if (event.startDelaySeconds <= 0) {
-                                event.state = EventState.IN_PROGRESS;
+                                event.start(this.currentDurationSeconds);
                             }
                             else {
                                 event.state = EventState.WAITING;
@@ -86,9 +88,9 @@ export class TimerInstance {
                         }
                         break;
                     case EventState.WAITING:
-                        event.elaspedStartDelaySeconds++;
-                        if (event.elaspedStartDelaySeconds >= event.startDelaySeconds) {
-                            event.state = EventState.IN_PROGRESS;
+                        event.elapsedStartDelaySeconds++;
+                        if (event.elapsedStartDelaySeconds >= event.startDelaySeconds) {
+                            event.start(this.currentDurationSeconds);
                         }
                         break;
                     default:
@@ -108,6 +110,65 @@ export class TimerInstance {
                     this.state = EventState.COMPLETED;
                 }
             }
+        }
+    }
+
+    /**
+     * Clones the entire timer, events, and current elapsed time.
+     */
+    clone() {
+
+        const clonedEvents = [];
+        for (const ev of this.events) {
+            const cloned = new EventInstance();
+            cloned.name = ev.name;
+            cloned.description = ev.description;
+            cloned.state = ev.state;
+            cloned.durationSeconds = ev.durationSeconds;
+            cloned.currentDurationSeconds = ev.currentDurationSeconds;
+            cloned.startTimeSeconds = ev.startTimeSeconds;
+            cloned.completedDurationSeconds = ev.completedDurationSeconds;
+            cloned.startDelaySeconds = ev.startDelaySeconds;
+            cloned.elapsedStartDelaySeconds = ev.elapsedStartDelaySeconds;
+            cloned.expectedStartTimeSeconds = ev.expectedStartTimeSeconds;
+            cloned.expectedCompletedTimeSeconds = ev.expectedCompletedTimeSeconds;
+
+            clonedEvents.push(cloned);
+        }
+
+        for (const ev of this.events) {
+            const clonedEvent = clonedEvents.find(ce => ce.name === ev.name)!;
+            for (const d of ev.dependencies) {
+                clonedEvent.dependencies.push(clonedEvents.find(ce => ce.name === d.name)!);
+            }
+            for (const d of ev.dependents) {
+                clonedEvent.dependents.push(clonedEvents.find(ce => ce.name === d.name)!);
+            }
+        }
+
+        const clonedTimer = TimerInstance.fromEvents(this.name, clonedEvents);
+        return clonedTimer;
+    }
+
+    calculateExpectedTimes() {
+
+        if (this.events.find(ev => ev.state === EventState.PAUSED)) {
+            // cannot calculate expected times when paused
+            return;
+        }
+
+        const clonedTimer = this.clone();
+
+        // extremely expensive way to determine how long tasks will take
+        while (clonedTimer.state !== EventState.COMPLETED) {
+            clonedTimer.progress();
+        }
+
+        this.expectedDurationSeconds = clonedTimer.currentDurationSeconds;
+        for (const clonedEv of clonedTimer.events) {
+            const ev = this.events.find(ev => ev.name === clonedEv.name)!;
+            ev.expectedStartTimeSeconds = clonedEv.startTimeSeconds!;
+            ev.expectedCompletedTimeSeconds = clonedEv.completedDurationSeconds!;
         }
     }
 
@@ -135,25 +196,31 @@ export class TimerInstance {
 }
 
 export class EventInstance {
-    name: string;
-    description: string;
+    name: string = "";
+    description: string = "";
     state: EventState = EventState.PENDING;
-    durationSeconds: number;
+    durationSeconds: number = 0;
     currentDurationSeconds: number = 0;
+    startTimeSeconds?: number = 0;
     completedDurationSeconds?: number;
     dependencies: EventInstance[] = [];
     dependents: EventInstance[] = [];
-    startDelaySeconds: number;
-    elaspedStartDelaySeconds: number = 0;
+    startDelaySeconds: number = 0;
+    elapsedStartDelaySeconds: number = 0;
 
-    constructor(eventJson: EventJson) {
-        this.name = eventJson.name;
+    expectedStartTimeSeconds: number = 0;
+    expectedCompletedTimeSeconds: number = 0;
+
+    static fromEventJson(eventJson: EventJson): EventInstance {
+        const event = new EventInstance();
+        event.name = eventJson.name;
         if (!this.name) {
             throw new Error("Events must have a name.");
         }
-        this.description = eventJson.description ?? "";
-        this.durationSeconds = parseDuration(eventJson.duration);
-        this.startDelaySeconds = parseDuration(eventJson.startDelay);
+        event.description = eventJson.description ?? "";
+        event.durationSeconds = parseDuration(eventJson.duration);
+        event.startDelaySeconds = parseDuration(eventJson.startDelay);
+        return event;
     }
 
     addDependency(event: EventInstance) {
@@ -235,9 +302,15 @@ export class EventInstance {
 
     reset() {
         this.state = EventState.PENDING;
+        this.startTimeSeconds = undefined;
         this.completedDurationSeconds = undefined;
         this.currentDurationSeconds = 0;
-        this.elaspedStartDelaySeconds = 0;
+        this.elapsedStartDelaySeconds = 0;
+    }
+
+    start(timerDurationSeconds: number) {
+        this.state = EventState.IN_PROGRESS;
+        this.startTimeSeconds = timerDurationSeconds;
     }
 
     completed(timerDurationSeconds: number) {
@@ -332,7 +405,7 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
 
     const eventInstances: Map<string, EventInstance> = new Map();
     for (const eventJson of timerJson.events) {
-        const eventInstance = new EventInstance(eventJson);
+        const eventInstance = EventInstance.fromEventJson(eventJson);
 
         if (eventInstances.has(eventInstance.name)) {
             throw new Error(`Event names must be unique, ${eventInstance.name} is duplicated.`);
@@ -379,16 +452,8 @@ export function ConstructEvent(timerJson: TimerJson): TimerInstance {
             throw new Error(`${event.name} has a cyclic dependency`);
         }
     }
-    let instance = new TimerInstance(timerJson.name, toArray(eventInstances.values()));
-    let duration = 0;
-    // extremely expensive way to determine how long the entire task will take
-    while (instance.state !== EventState.COMPLETED) {
-        instance.progress();
-        duration++;
-    }
-
-    instance.expectedDurationSeconds = duration;
-    instance.reset();
+    let instance = TimerInstance.fromEvents(timerJson.name, toArray(eventInstances.values()));
+    instance.calculateExpectedTimes();
     return instance;
 };
 
