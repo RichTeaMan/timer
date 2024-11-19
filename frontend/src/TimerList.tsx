@@ -15,8 +15,6 @@ type RouteParams = {
 
 export const TimerList = () => {
 
-    const INTERVAL_LENGTH = 10;
-
     const params = useParams<RouteParams>();
 
     const [timerKeys, setTimerKeys] = useState<string[]>();

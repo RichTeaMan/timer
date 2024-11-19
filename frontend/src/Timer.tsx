@@ -30,6 +30,7 @@ export const Timer = () => {
 
   const params = useParams<RouteParams>();
 
+  const [startSeconds, setStartSeconds] = useState<number>(0);
   const [timer, setTimer] = useState<timerLib.TimerInstance>();
   const [milliseconds, setMilliseconds] = useState(0);
   const [currentActivities, setCurrentActivities] = useState<timerLib.EventInstance[]>([]);
@@ -41,6 +42,7 @@ export const Timer = () => {
       if (params.timerKey) {
         const json = timerLib.FetchTimer(params.timerKey);
         setTimer(timerLib.ConstructEvent(json));
+        setStartSeconds(Math.floor(Date.now() / 1000));
       }
       else {
         throw new Error("Timer not found");
@@ -65,17 +67,25 @@ export const Timer = () => {
     if (timer.state !== timerLib.EventState.COMPLETED) {
 
       timer.progress();
-      const completed = timer.events.filter(ev => ev.state === timerLib.EventState.COMPLETED);
-      const inProgress = timer.events.filter(ev => ev.state === timerLib.EventState.IN_PROGRESS || ev.state === timerLib.EventState.PAUSED);
+      const completed = timer.events.filter(ev => ev.state === timerLib.EventState.COMPLETED)
+        .sort((a, b) => a.completedDurationSeconds! - b.completedDurationSeconds!);
+      const inProgress = timer.events.filter(ev => ev.state === timerLib.EventState.IN_PROGRESS || ev.state === timerLib.EventState.PAUSED)
+        .sort((a, b) => a.startTimeSeconds! - b.startTimeSeconds!);
       setCompletedActivites(completed);
       setCurrentActivities(inProgress);
 
-      const upcoming = [... new Set(inProgress.flatMap(a => a.dependents))];
+      const upcoming = timer.events.filter(ev => ev.state === timerLib.EventState.PENDING || ev.state === timerLib.EventState.WAITING)
+        .sort((a, b) => a.expectedStartTimeSeconds - b.expectedStartTimeSeconds);
       setUpcomingActivites(upcoming);
     }
     else {
       setCurrentActivities([]);
     }
+  }
+
+  function formatTime(seconds: number): string {
+    const date = new Date(seconds * 1000);
+    return date.toLocaleTimeString();
   }
 
   function formatTitle(title: string): string {
@@ -129,7 +139,7 @@ export const Timer = () => {
                     <Stack divider={<StackDivider />} spacing='4'>
                       <Box textAlign={"justify"} fontSize={"md"}>
                         <Text color={'gray'}>Total duration: {currentActivity.durationToString()}</Text>
-                        <Button size={"sm"} w={"8em"} onClick={() => currentActivity.togglePause()}>
+                        <Button size={"sm"} w={"8em"} onClick={() => { currentActivity.togglePause(); timer?.calculateExpectedTimes(); }}>
                           {currentActivity.state === timerLib.EventState.PAUSED ? 'Resume' : 'Pause'}
                         </Button>
                       </Box>
@@ -140,7 +150,7 @@ export const Timer = () => {
                         <Text>Extend time by...</Text>
                         <HStack spacing={2}>
                           {extendDurationInfo(currentActivity.durationSeconds).map(info => {
-                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.extendBySeconds(info.seconds)}>
+                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => { currentActivity.extendBySeconds(info.seconds); timer?.calculateExpectedTimes(); }}>
                               {info.text}
                             </Button>)
                           })}
@@ -150,7 +160,7 @@ export const Timer = () => {
                         <Text>Reduce time by...</Text>
                         <HStack spacing={2} paddingBottom={2}>
                           {extendDurationInfo(currentActivity.durationSeconds).map(info => {
-                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => currentActivity.reduceBySeconds(info.seconds)}>
+                            return (<Button key={info.seconds} size={"sm"} w={"8em"} onClick={() => { currentActivity.reduceBySeconds(info.seconds); timer?.calculateExpectedTimes(); }}>
                               {info.text}
                             </Button>)
                           })}
@@ -183,7 +193,8 @@ export const Timer = () => {
                     <AccordionIcon />
                   </AccordionButton>
                   <AccordionPanel>
-                    <Text color={"gray"}>Expected duration is {activity.durationToString()}</Text>
+                    <Text color={"gray"}>Scheduled start time is {formatTime(activity.expectedStartTimeSeconds + startSeconds!)}</Text>
+                    <Text color={"gray"}>Duration is {activity.durationToString()}</Text>
                     <Text>{activity.description}</Text>
                   </AccordionPanel>
                 </AccordionItem>)
@@ -207,7 +218,7 @@ export const Timer = () => {
                     <AccordionIcon />
                   </AccordionButton>
                   <AccordionPanel>
-                    <Text color={"gray"}>Completed in {completedActivity.completedToString()}</Text>
+                    <Text color={"gray"}>Completed at {formatTime(completedActivity.completedDurationSeconds! + startSeconds)}</Text>
                     <Text>{completedActivity.description}</Text>
                   </AccordionPanel>
                 </AccordionItem>)
