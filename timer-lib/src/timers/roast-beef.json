@@ -79,7 +79,7 @@
             "description": "Put puddings into the oven.",
             "duration": "00:20:00",
             "dependencies": [
-                "boil-potatoes",
+                "cook-beef",
                 "mix-yorkshire-batter"
             ],
             "startDelay": "00:30:00"
