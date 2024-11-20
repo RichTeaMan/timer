@@ -193,8 +193,8 @@ export const Timer = () => {
                     <AccordionIcon />
                   </AccordionButton>
                   <AccordionPanel>
-                    <Text color={"gray"}>Scheduled start time is {formatTime(activity.expectedStartTimeSeconds + startSeconds!)}</Text>
-                    <Text color={"gray"}>Duration is {activity.durationToString()}</Text>
+                    <Text color={"gray"} fontSize={"md"}>Scheduled start time is {formatTime(activity.expectedStartTimeSeconds + startSeconds!)}</Text>
+                    <Text color={"gray"} fontSize={"md"}>Duration is {activity.durationToString()}</Text>
                     <Text>{activity.description}</Text>
                   </AccordionPanel>
                 </AccordionItem>)
@@ -218,7 +218,7 @@ export const Timer = () => {
                     <AccordionIcon />
                   </AccordionButton>
                   <AccordionPanel>
-                    <Text color={"gray"}>Completed at {formatTime(completedActivity.completedDurationSeconds! + startSeconds)}</Text>
+                    <Text color={"gray"} fontSize={"md"}>Completed at {formatTime(completedActivity.completedDurationSeconds! + startSeconds)}</Text>
                     <Text>{completedActivity.description}</Text>
                   </AccordionPanel>
                 </AccordionItem>)
