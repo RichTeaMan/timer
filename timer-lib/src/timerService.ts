@@ -19,7 +19,6 @@ export enum EventState {
     PAUSED,
 }
 
-
 export class TimerInstance {
     name: string = "";
     events: EventInstance[] = [];
@@ -158,10 +157,50 @@ export class TimerInstance {
         }
 
         const clonedTimer = this.clone();
+        clonedTimer.progress();
 
-        // extremely expensive way to determine how long tasks will take
         while (clonedTimer.state !== EventState.COMPLETED) {
+
+            // Convoluted code below finds when the next step is completed or finished waiting and adds that time
+            // amount directly. This dramatically improves performance.
+            const inProgress = clonedTimer.events
+                .filter(ev => ev.state === EventState.IN_PROGRESS);
+            let inProgressStep = Number.MAX_SAFE_INTEGER;
+            if (inProgress.length > 0) {
+                const nextStep = inProgress
+                    .sort((a, b) => (a.durationSeconds - a.currentDurationSeconds!) - (b.durationSeconds - b.currentDurationSeconds!))[0];
+                inProgressStep = nextStep.durationSeconds - nextStep.currentDurationSeconds!;
+            }
+
+            const waiting = clonedTimer.events
+                .filter(ev => ev.state === EventState.WAITING);
+            let waitingStep = Number.MAX_SAFE_INTEGER;
+            if (waiting.length > 0) {
+                const nextStep = waiting
+                    .sort((a, b) => (a.startDelaySeconds - a.elapsedStartDelaySeconds) - (b.startDelaySeconds - b.elapsedStartDelaySeconds))[0];
+                waitingStep = nextStep.startDelaySeconds - nextStep.elapsedStartDelaySeconds;
+            }
+            const step = Math.min(inProgressStep, waitingStep) - 1;
+            if (step === Number.MAX_SAFE_INTEGER - 1) {
+                console.log("In progress");
+                console.log(inProgress);
+                console.log("Waiting");
+                console.log(waiting);
+                throw new Error("MAX INT STEP!");
+            }
+
+            for (const ev of inProgress) {
+                ev.currentDurationSeconds += step;
+            }
+            for (const ev of waiting) {
+                ev.elapsedStartDelaySeconds += step;
+            }
+            clonedTimer.currentDurationSeconds += step;
             clonedTimer.progress();
+
+            if (clonedTimer.currentDurationSeconds >= 5_000_000) {
+                throw new Error("TOO LONG!");
+            }
         }
 
         this.expectedDurationSeconds = clonedTimer.currentDurationSeconds;
@@ -199,7 +238,11 @@ export class EventInstance {
     name: string = "";
     description: string = "";
     state: EventState = EventState.PENDING;
+
+    /** The number of seconds this event will last. */
     durationSeconds: number = 0;
+
+    /** The current number of seconds this event has been running for. */
     currentDurationSeconds: number = 0;
     startTimeSeconds?: number = 0;
     completedDurationSeconds?: number;

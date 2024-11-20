@@ -1,0 +1,38 @@
+{
+    "name": "simple-1",
+    "events": [
+        {
+            "name": "step-1",
+            "description": "step 1 description",
+            "duration": "00:10:00"
+        },
+        {
+            "name": "step-2",
+            "description": "step 2 description",
+            "duration": "0:10:00",
+            "dependencies": [
+                "step-1"
+            ],
+            "startDelay": "00:00:00,"
+        },
+        {
+            "name": "step-3",
+            "description": "step 3 description",
+            "duration": "0:20:00",
+            "dependencies": [
+                "step-1"
+            ],
+            "startDelay": "00:00:00,"
+        },
+        {
+            "name": "step-4",
+            "description": "step 4 description",
+            "duration": "00:10:00",
+            "dependencies": [
+                "step-2",
+                "step-3"
+            ],
+            "startDelay": "00:30:00"
+        }
+    ]
+}
