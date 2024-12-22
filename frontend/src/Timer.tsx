@@ -26,7 +26,8 @@ type RouteParams = {
 
 export const Timer = () => {
 
-  const INTERVAL_LENGTH = 10;
+  // Interval length in milliseconds. Reduce to 10 for much faster debugging.
+  const INTERVAL_LENGTH = 1000;
 
   const params = useParams<RouteParams>();
 
