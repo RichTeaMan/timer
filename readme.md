@@ -14,12 +14,12 @@ The main event tiemr interface is a single page web application. To run:
 ```bash
 cd frontend
 npm install
-npm run serve
+npm start
 ```
 
 The application will be accessible from `http://localhost:4173`.
 
-To get to the application from any device on the local network, use `npm run serve -- --host`.
+To get to the application from any device on the local network, use `npm start -- --host`.
 
 ## Project overview
 
